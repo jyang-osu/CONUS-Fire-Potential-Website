@@ -53,12 +53,11 @@ def main():
     with (ROOT/'export.lock').open('a+b') as lock:
         if lock.tell()==0:lock.write(b'0');lock.flush()
         lock.seek(0);msvcrt.locking(lock.fileno(),msvcrt.LK_NBLCK,1)
-        all_items=src.inventory();selected=[]
-        for v in src.META:
-            items=[e for e in all_items.values() if e['variable']==v]
-            if not items:continue
-            latest=max(e['time'] for e in items);cutoff=(datetime.strptime(latest,'%Y%m%d_%H%M')-timedelta(hours=239)).strftime('%Y%m%d_%H%M')
-            selected.extend(e for e in items if e['time']>=cutoff)
+        all_items=src.inventory()
+        if not all_items:raise ValueError('No completed outputs found')
+        latest=max(e['time'] for e in all_items.values())
+        cutoff=(datetime.strptime(latest,'%Y%m%d_%H%M')-timedelta(hours=239)).strftime('%Y%m%d_%H%M')
+        selected=[e for e in all_items.values() if cutoff<=e['time']<=latest]
         if not selected:raise ValueError('No completed outputs found')
         results=[];skipped=[]
         def safe(e):
@@ -84,4 +83,5 @@ def main():
         report=dict(status='PASS',products=len(results),variables=len(set(e['variable'] for e in results)),site_bytes=sum(p.stat().st_size for p in site.rglob('*') if p.is_file()),elapsed_seconds=round(time.time()-started,1),skipped=skipped)
         js(ROOT/'export_report.json',report);print(json.dumps(report,indent=2),flush=True)
 if __name__=='__main__':main()
+
 

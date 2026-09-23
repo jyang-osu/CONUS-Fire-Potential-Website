@@ -1,6 +1,6 @@
 # CONUS dashboard for GitHub Pages
 
-This is a separate static version of the local portal. The website needs no Python server, no J: drive access, and no external map services. It includes all 19 variables, four result families, state boundaries, WGS84 cell coordinates, CONUS statistics, time-zone selection, manual Refresh, and ten-day clicked-cell plots.
+This is a separate static version of the local portal. The website needs no Python server, no J: drive access, and no external map services. It includes all 19 variables, four result families, state boundaries, WGS84 cell coordinates, CONUS statistics, time-zone selection, four independent family panels, and ten-day clicked-cell plots.
 
 ## Use locally
 
@@ -22,9 +22,9 @@ The generated site is not published automatically by this local project. No repo
 
 ## Update the website
 
-Run Export_Data.cmd after new simulation hours are complete. Replace the site.zip release asset with the new package, then run the publishing workflow again. A browser Refresh reads the latest *published export*, not your local running simulation.
+Run Export_Data.cmd after new simulation hours are complete. Replace the site.zip release asset with the new package, then run the publishing workflow again. Reloading the browser reads the latest published export, not the live simulation. There is no in-page Refresh button.
 
-The exporter retains at most 240 available hourly slots per variable, anchored to that variable's newest completed GeoTIFF. Missing slots remain gaps; they do not extend the time window. Export is a snapshot: outputs still being written can be omitted until the next export.
+The exporter uses one shared 240-hour window ending at the newest completed GeoTIFF hour across all variables. The ZIP includes only catalog-listed assets inside that window. Missing slots remain gaps; they do not extend the time window. Export is a snapshot: outputs still being written can be omitted until the next export.
 
 Large data packages stay in release assets, avoiding growth of Git source history. GitHub Pages has an approximately 1 GB published-site limit; the exporter checks a conservative 950 MB asset budget and stops before replacing the catalog if exceeded.
 
@@ -60,3 +60,18 @@ The included results are model outputs and may remain in warm-up. Map colors are
 
 
 The GitHub version excludes wind direction (WDIR_vector_mean), spread_direction, SNOWC, and SNOW_FLAG. These variables remain in the simulation and local portal.
+
+## One-click publication
+
+Run Update_Website.cmd from the complete Website_GitHub folder after signing in with GitHub CLI. It exports, verifies, packages, replaces the web-data release asset, and starts the Pages workflow for jyang-osu/CONUS-Fire-Potential-Website. If GitHub returns a run URL, it waits for the deployment result; otherwise it prints the Actions page for checking. Keep the console open until completion. No commit is needed for data updates. This is a manual update, not a scheduled job. Do not run a separate export concurrently.
+
+
+## Continuous PowerShell publishing
+
+Run .\Auto_Publish_Website.ps1 from this complete Website_GitHub folder. It checks every 300 seconds for a newer hour containing all 19 variables in completed receipts, compares against the live website, and invokes Update_Website.ps1 only when needed. Leave PowerShell open and the computer awake. Ctrl+C stops it. Codex is not required. Use -CheckOnly for one read-only readiness check, or -IntervalSeconds 60 to check each minute. Failures retry; website_watch.log records checks. Existing deployments are allowed to finish before another update. Each update uploads the full ZIP. During historical catch-up, it publishes the latest ready snapshot rather than deploying every intermediate hour.
+
+
+
+## Dashboard layout
+
+Four panels display fuel moisture, fire danger indices, fire behavior, and weather conditions. Each panel has independent variable, hour, and time-zone controls, a map, CONUS statistics, and clicked-cell history. Panels use two columns on wide screens and stack on narrower screens. Black state boundaries are always visible. Reload the browser to load a newer published snapshot.
