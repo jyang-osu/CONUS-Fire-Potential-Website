@@ -1,0 +1,41 @@
+name: Publish CONUS dashboard
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release containing site.zip
+        required: true
+        default: web-data
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download prepared site
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh release download "$RELEASE_TAG" --pattern site.zip --dir package
+          mkdir public
+          unzip -q package/site.zip -d public
+          test -f public/index.html
+          test -f public/catalog.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+
