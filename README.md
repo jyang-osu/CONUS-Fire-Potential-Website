@@ -22,7 +22,7 @@ The generated site is not published automatically by this local project. No repo
 
 ## Update the website
 
-Run Export_Data.cmd after new simulation hours are complete. Replace the site.zip release asset with the new package, then run the publishing workflow again. Reloading the browser reads the latest published export, not the live simulation. There is no in-page Refresh button.
+Run Export_Data.cmd after new simulation hours are complete. Replace the site.zip release asset with the new package, then run the publishing workflow again. Reloading the browser reads the latest published export, not the live simulation. The header button, Refresh to see the latest results, reloads all four panels with the latest published snapshot.
 
 The exporter uses one shared 240-hour window ending at the newest completed GeoTIFF hour across all variables. The ZIP includes only catalog-listed assets inside that window. Missing slots remain gaps; they do not extend the time window. Export is a snapshot: outputs still being written can be omitted until the next export.
 
@@ -74,4 +74,4 @@ Run .\Auto_Publish_Website.ps1 from this complete Website_GitHub folder. It chec
 
 ## Dashboard layout
 
-Four panels display fuel moisture, fire danger indices, fire behavior, and weather conditions. Each panel has independent variable, hour, and time-zone controls, a map, CONUS statistics, and clicked-cell history. Panels use two columns on wide screens and stack on narrower screens. Black state boundaries are always visible. Reload the browser to load a newer published snapshot.
+Four panels display fuel moisture, fire danger indices, fire behavior, and weather conditions. Each panel has independent variable, hour, and time-zone controls, a map, CONUS statistics, and clicked-cell history. Panels use two columns on wide screens and stack on narrower screens. Black state boundaries are always visible. Use Refresh to see the latest results to load a newer published snapshot.

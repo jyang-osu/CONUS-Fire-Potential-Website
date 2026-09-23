@@ -25,11 +25,11 @@ META={
 'fireline_intensity':['Fireline intensity','kW/m',0,4000],
 'fire_type':['Fire type','category',0,3]}
 META.update({
-'TAIR_mean':['Air temperature','°C',-30,45],
+'TAIR_mean':['Air temperature','°C',-20,40],
 'RELH_mean':['Relative humidity','%',0,100],
 'WSPD_mean':['Wind speed','m/s',0,25],
 'RAIN_total_mm':['Hourly precipitation','mm',0,25],
-'SRAD_mean':['Solar radiation','W/m²',0,1000]})
+'SRAD_mean':['Solar radiation','W/m²',0,800]})
 GROUPS={k:('Fuel moisture' if k.startswith(('dmc_','lmc_')) else
     'Fire danger indices' if k in ('BI','ERC','SC','IC') else
     'Weather conditions' if k in ('TAIR_mean','RELH_mean','WSPD_mean','RAIN_total_mm','SRAD_mean') else

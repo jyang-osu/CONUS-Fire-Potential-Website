@@ -18,15 +18,16 @@ def export_one(entry):
         with mem.open() as ds:
             a=ds.read(1,masked=True);valid=~np.ma.getmaskarray(a)&np.isfinite(a.data)
             data=np.where(valid,a.data,np.nan).astype('<f4');vals=data[valid];tags=ds.tags()
-            v=entry['variable'];base=entry['time']+'_'+entry['sha'][:16]+'_web2'
+            v=entry['variable'];base=entry['time']+'_'+entry['sha'][:16]+('_web5rain' if v=='RAIN_total_mm' else '_web4weather' if v in ('RELH_mean','RAIN_total_mm','SRAD_mean') else '_web3temp' if v=='TAIR_mean' else '_web2')
             rel=Path('data')/v/base
             numeric=rel.with_suffix('.bin.gz');png=rel.with_suffix('.png')
             dest=ROOT/'site'
             if not (dest/numeric).exists():atomic(dest/numeric,gzip.compress(np.where(valid,np.rint(np.nan_to_num(data)*100),-2147483648).astype('<i4').tobytes(),compresslevel=6,mtime=0))
             if not (dest/png).exists():
-                colors=([[215,25,28],[253,141,60],[255,230,65],[44,180,91],[33,102,222]] if src.GROUPS[v]=='Fuel moisture' else
+                colors=([[215,25,28],[253,141,60],[255,230,65],[44,180,91],[33,102,222]] if src.GROUPS[v]=='Fuel moisture' or v=='RELH_mean' else
+                        [[255,255,225],[151,218,130],[48,202,211],[38,121,218],[19,35,130]] if v=='RAIN_total_mm' else
                         [[0,145,55],[134,207,38],[255,230,0],[255,132,0],[220,20,35]] if src.GROUPS[v]=='Fire danger indices' else
-                        [[30,80,230],[0,190,230],[60,200,75],[255,190,0],[225,20,35]] if v in ('rate_of_spread','flame_length','fireline_intensity') else
+                        [[30,80,230],[0,190,230],[60,200,75],[255,190,0],[225,20,35]] if v in ('rate_of_spread','flame_length','fireline_intensity','TAIR_mean') else
                         [[37,76,115],[50,139,158],[161,201,135],[241,204,102],[209,90,66]])
                 lo,hi=src.META[v][2:]
                 indices=np.where(valid,1+np.rint(np.clip((np.nan_to_num(data)-lo)/(hi-lo),0,1)*254),0).astype('uint8')
