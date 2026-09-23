@@ -1,77 +1,203 @@
-# CONUS dashboard for GitHub Pages
+# CONUS / Fire potential (Beta Version)
 
-This is a separate static version of the local portal. The website needs no Python server, no J: drive access, and no external map services. It includes all 19 variables, four result families, state boundaries, WGS84 cell coordinates, CONUS statistics, time-zone selection, four independent family panels, and ten-day clicked-cell plots.
+A static dashboard for hourly potential fire behavior, fire danger indices, fuel moisture, and weather across the contiguous United States. The browser displays exported simulation results; it does not run the simulation.
 
-## Use locally
+**Live website:** https://jyang-osu.github.io/CONUS-Fire-Potential-Website/
 
-1. Double-click **Export_Data.cmd**. This reads the completed simulation outputs configured in config.json. It creates site/ and site.zip. The simulation and local portal are not modified.
-2. Double-click **Preview.cmd**.
-3. Open **http://127.0.0.1:8766/site/**. Keep that console open. Ctrl+C stops the preview.
+## Start automatic publishing
 
-Do not open index.html directly with a file:// URL: browsers require HTTP to fetch the numeric files.
+Run from the complete local website project, not the Git repository checkout:
 
-## Publish to GitHub Pages
+```powershell
+cd J:\US_Fire_Potential_Behavior\Website_GitHub
+.\Auto_Publish_Website.ps1
+```
 
-1. Create a GitHub repository and upload/commit the source files in this folder, including the hidden .github folder and web folder. Do NOT commit runtime/, site/, or site.zip. They are excluded in .gitignore.
-2. In the repository's **Settings → Pages → Build and deployment**, select **GitHub Actions**.
-3. Create a release with tag **web-data**, and attach the generated **site.zip** as a release asset. The ZIP contains index.html at its root.
-4. Open **Actions → Publish CONUS dashboard → Run workflow** and use release_tag **web-data**.
-5. The successful deployment displays your GitHub Pages URL.
+If PowerShell blocks script execution:
 
-The generated site is not published automatically by this local project. No repository or account has been created or changed. Publishing makes the displayed simulation products accessible according to the repository's Pages visibility.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Auto_Publish_Website.ps1
+```
 
-## Update the website
+Leave the window open, the computer awake, and the internet and simulation drive available. Codex does not need to be running. Press **Ctrl+C** to stop; avoid interrupting an upload or deployment already in progress.
 
-Run Export_Data.cmd after new simulation hours are complete. Replace the site.zip release asset with the new package, then run the publishing workflow again. Reloading the browser reads the latest published export, not the live simulation. The header button, Refresh to see the latest results, reloads all four panels with the latest published snapshot.
+The watcher checks every **300 seconds**. When a newer complete simulation hour is available, it:
 
-The exporter uses one shared 240-hour window ending at the newest completed GeoTIFF hour across all variables. The ZIP includes only catalog-listed assets inside that window. Missing slots remain gaps; they do not extend the time window. Export is a snapshot: outputs still being written can be omitted until the next export.
+1. Checks the published catalog and whether a Pages deployment is already active.
+2. Exports and verifies the latest 240-hour data window.
+3. Creates `site.zip` in this folder.
+4. Replaces the ZIP attachment in the GitHub release tagged `web-data`.
+5. Starts the **Publish CONUS dashboard** workflow on `main`.
+6. Checks the published catalog on subsequent cycles to confirm the new hour is available.
 
-Large data packages stay in release assets, avoiding growth of Git source history. GitHub Pages has an approximately 1 GB published-site limit; the exporter checks a conservative 950 MB asset budget and stops before replacing the catalog if exceeded.
+It retries failed checks or updates on later cycles. During historical catch-up, it publishes the latest ready snapshot rather than every intermediate hour. Each publication uploads the entire ZIP. Only run one watcher, and do not run a separate export or manual publisher concurrently.
 
-## Files and formats
+Optional commands:
 
-- **web/index.html**: static dashboard source, including boundary outlines and cell-center coordinates.
-- **export_site.py**: local exporter with checksum verification, PNG generation, numeric export, and stale-data cleanup.
-- **source_reader.py**: independent output catalog reader and variable definitions.
-- **config.json**: simulation_root and export_workers (default 6).
-- **site/**: complete generated website; contains no Python or GeoTIFF source data.
-- **site/catalog.json**: variables, units, completed hours, statistics, raster geometry, hashes, and relative data links.
-- **site/data/**: transparent map PNGs plus gzip-compressed little-endian Int32 row-major grids scaled by 100 (two decimal places); -2147483648 means NoData.
-- **site.zip**: deployable release asset.
-- **runtime/**: local bundled Python dependencies; never upload to Pages.
-- **.github/workflows/pages.yml**: manual release-asset deployment workflow.
+```powershell
+# Check readiness once without exporting or publishing
+.\Auto_Publish_Website.ps1 -CheckOnly
 
-The browser reconstructs interactive maps from numeric arrays so clicked values are independent of map colors. PNGs provide downloadable map images without state-line or label overlays. Web values are rounded to two decimal places, including values above the legend maximum; original GeoTIFFs retain full precision. Summary statistics are calculated from the original float data. Source GeoTIFFs remain in Combined_CONUS for GIS analysis.
+# Check every minute instead of every five minutes
+.\Auto_Publish_Website.ps1 -IntervalSeconds 60
+```
 
-The history chart may fetch up to 240 compressed grids for the chosen variable; first-time charts can take longer on slow connections. Requests are limited to six at a time and a small memory cache. A modern browser supporting DecompressionStream is required.
+Logs are written to `website_watch.log`. Readiness currently requires all **19 exported variables**, including the two live fuel moisture variables hidden from the interface.
 
-Time selection is restricted to the newest ten-day window for each variable. Charts always end at that variable's latest exported hour, independently of the map hour. UTC data keys are converted for display using the selected regional time zone and daylight-saving rules.
+## Publish immediately
 
-## Transfer and independence
+Wait for any active publication to finish, then stop the watcher before running:
 
-Keep this complete local folder if the recipient needs to export or preview. Change simulation_root in config.json if results are stored elsewhere. Only site/ contents are required to host the published website. The exporter uses the supplied runtime and source_reader.py, not the Website_CONUS code or environment.
+```powershell
+.\Update_Website.ps1
+```
 
-## Hosting documentation
+Alternatively, double-click `Update_Website.cmd`. These perform a single export, validation, ZIP upload, and workflow dispatch. If GitHub returns the run URL, the script waits for the deployment result; otherwise it prints the Actions page so you can check the result there.
 
-- https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
-- https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits
+After publication, restart `Auto_Publish_Website.ps1` if continuous updates are wanted. A source-only design change does not trigger the watcher when the complete simulation hour has not advanced; use a manual publication to publish such changes immediately.
 
-The included results are model outputs and may remain in warm-up. Map colors are display ranges, not official operational danger classes.
+## GitHub sign-in and initial setup
 
+Install GitHub CLI and sign in on the publishing computer. With the default Windows installation:
 
-The GitHub version excludes wind direction (WDIR_vector_mean), spread_direction, SNOWC, and SNOW_FLAG. These variables remain in the simulation and local portal.
+```powershell
+& "C:\Program Files\GitHub CLI\gh.exe" auth login
+& "C:\Program Files\GitHub CLI\gh.exe" auth status
+```
 
-## One-click publication
+Choose GitHub.com, HTTPS, and browser sign-in. Credentials are managed by GitHub CLI; never place passwords or tokens in project files.
 
-Run Update_Website.cmd from the complete Website_GitHub folder after signing in with GitHub CLI. It exports, verifies, packages, replaces the web-data release asset, and starts the Pages workflow for jyang-osu/CONUS-Fire-Potential-Website. If GitHub returns a run URL, it waits for the deployment result; otherwise it prints the Actions page for checking. Keep the console open until completion. No commit is needed for data updates. This is a manual update, not a scheduled job. Do not run a separate export concurrently.
+The current scripts target `jyang-osu/CONUS-Fire-Potential-Website`. The repository must have:
 
+- GitHub Pages configured with **GitHub Actions** as its source.
+- The included `.github/workflows/pages.yml` workflow on `main`.
+- A published release tagged `web-data`.
 
-## Continuous PowerShell publishing
+For a new setup, run `Export_Data.cmd`, attach `site.zip` to that release using **Attach binaries**, then run **Publish CONUS dashboard** from the Actions tab with `release_tag=web-data`.
 
-Run .\Auto_Publish_Website.ps1 from this complete Website_GitHub folder. It checks every 300 seconds for a newer hour containing all 19 variables in completed receipts, compares against the live website, and invokes Update_Website.ps1 only when needed. Leave PowerShell open and the computer awake. Ctrl+C stops it. Codex is not required. Use -CheckOnly for one read-only readiness check, or -IntervalSeconds 60 to check each minute. Failures retry; website_watch.log records checks. Existing deployments are allowed to finish before another update. Each update uploads the full ZIP. During historical catch-up, it publishes the latest ready snapshot rather than deploying every intermediate hour.
+## Local preview and export only
 
+- `Export_Data.cmd`: export, verify, and create the ZIP without uploading it.
+- `Preview.cmd`: start the local preview server.
+- Preview address: http://127.0.0.1:8766/site/
 
+Do not open the HTML directly from File Explorer; the numeric data must be served over HTTP. The preview uses the generated `site` folder. Export again after source or data changes to synchronize it.
 
-## Dashboard layout
+## Portal layout and controls
 
-Four panels display fuel moisture, fire danger indices, fire behavior, and weather conditions. Each panel has independent variable, hour, and time-zone controls, a map, CONUS statistics, and clicked-cell history. Panels use two columns on wide screens and stack on narrower screens. Black state boundaries are always visible. Use Refresh to see the latest results to load a newer published snapshot.
+| Position | Panel |
+| --- | --- |
+| Top left | Potential Fire Behavior |
+| Top right | Fire Danger Indices |
+| Bottom left | Fuel Moisture |
+| Bottom right | Weather Conditions |
+
+Panels stack on narrower screens. Each panel has independent variable, hour, and time-zone controls. **Central Time (CDT/CST)** is the default, with daylight-saving adjustment. Timestamps label interval ends.
+
+- Black state boundaries are always visible.
+- CONUS minimum, mean, and maximum appear beside each map.
+- Click a grid cell to see its value and latitude/longitude, plus an hourly history chart.
+- History covers 240 hourly slots ending at the selected variable's latest exported hour, independent of the selected map hour. Missing hours appear as gaps.
+- **Refresh to see the latest results** reloads the page using a fresh URL and requests the latest published catalog. An open page does not automatically refresh when a new release is deployed.
+- **Download map PNG** saves a colored raster image, without the interactive map's boundary and selection overlays.
+
+The interface uses a burnt-orange and cream theme and an embedded original shield logo. NASA, USGS, and NSF logos appear below the centered acknowledgement.
+
+### Display variables and legend ranges
+
+| Panel | Variable | Display range |
+| --- | --- | --- |
+| Potential Fire Behavior | Rate of spread | 0–30 m/min |
+| Potential Fire Behavior | Flame length | 0–4 m |
+| Potential Fire Behavior | Fireline intensity | 0–4,000 kW/m |
+| Potential Fire Behavior | Fire type | 0 suppressed/unburned; 1 surface; 2 passive crown; 3 active crown |
+| Fire Danger Indices | BI | 0–120 |
+| Fire Danger Indices | ERC | 0–60 |
+| Fire Danger Indices | SC | 0–60 |
+| Fire Danger Indices | IC | 0–100 |
+| Fuel Moisture | 1-, 10-, 100-, and 1000-hour dead fuel moisture | 2–30% dry mass |
+| Weather Conditions | Air temperature | −20–40 °C |
+| Weather Conditions | Relative humidity | 0–100% |
+| Weather Conditions | Wind speed | 0–25 m/s |
+| Weather Conditions | Hourly precipitation | 0–25 mm |
+| Weather Conditions | Solar radiation | 0–800 W/m² |
+
+Dead fuel moisture and relative humidity use red for drier values and blue for wetter values. Danger indices run from green to red. Behavior magnitudes and temperature run from blue to red. Precipitation uses pale cream, green, cyan, blue, and dark blue as amounts increase.
+
+Herbaceous and woody live fuel moisture are **hidden from the portal** pending review of their simulation. They remain in the simulation and the 19-variable export package; there are **17 selectable variables**. Wind direction, spread direction, snow cover, and snow flag are excluded from this website export.
+
+Legend limits affect colors only. Actual values outside those limits remain available in cell values and charts. The original GeoTIFFs are not changed.
+
+## Data window, formats, and validation
+
+The exporter reads completed simulation receipts and verifies source checksums. It uses a shared **240-hour window** ending at the latest available output hour. Missing slots do not extend the window backward. The ZIP includes the page, catalog, and only the map assets referenced within that window; stale files are excluded.
+
+- Source rasters: 10-km CONUS grid, EPSG:5070.
+- Numeric web grids: gzip-compressed little-endian Int32 arrays, scaled by 100; `-2147483648` is NoData.
+- Numeric rounding uses Float64 arithmetic before integer encoding to retain two-decimal precision for large values.
+- Map images: indexed-color PNGs.
+- Statistics: calculated from the source raster values.
+- Validation: catalog variables, latest grids and masks against GeoTIFFs, numeric precision, PNG dimensions, referenced asset existence, hourly product counts, and site size.
+
+The exporter applies a 950 MB referenced-asset budget and validation checks that the generated site is under 1 GB. Large release assets are kept out of Git history. A clicked-cell chart can fetch up to 240 grids, so the first chart may take time to load. Use a modern browser supporting gzip `DecompressionStream`.
+
+## Project and repository folders
+
+**Working project:** `J:\US_Fire_Potential_Behavior\Website_GitHub`
+
+**Source repository:** `J:\US_Fire_Potential_Behavior\Github_repository\CONUS-Fire-Potential-Website`
+
+Edit and test in the working project, copy changed source files to the repository, and use GitHub Desktop to **Commit → Push origin**. Copying between these folders is not automatic.
+
+Publishing and committing serve different purposes:
+
+- `Update_Website.ps1` and the watcher publish the locally generated ZIP; they do **not** commit or push source files.
+- Committing and pushing preserve source history; the current workflow does **not** publish automatically on push.
+- Changes made only in the repository checkout are not used by the working project's exporter.
+
+Do not commit `runtime`, `site`, `site.zip`, logs, or temporary lock files. The repository checkout alone cannot run the bundled-runtime launchers. Keep the complete working project when transferring export and publishing capability to another computer.
+
+### Important files
+
+| File or folder | Purpose |
+| --- | --- |
+| `Auto_Publish_Website.ps1` / `watch_website.py` | Continuous publishing watcher |
+| `Update_Website.ps1` / `Update_Website.cmd` | Single publication |
+| `Export_Data.cmd` | Export and package without publication |
+| `Preview.cmd` | Local preview server |
+| `web/index.html` | Portal source with embedded map geometry and logos |
+| `web/assets` | Agency logo originals and source URLs |
+| `CONUS_Fire_Potential_Logo.svg` | Original portal logo |
+| `source_reader.py` | Simulation inventory and legend metadata |
+| `export_site.py` | Numeric and PNG export, catalog, stale asset cleanup |
+| `verify_site.py` | Export validation |
+| `package_site.py` | Latest-240-hour ZIP assembly |
+| `static-adapter.js` | Static data adapter reference; active code is embedded in the HTML |
+| `config.json` | Simulation location and export worker count |
+| `site` / `site.zip` | Generated website and release package |
+| `runtime` | Standalone local Python environment |
+| `.github/workflows/pages.yml` | Release download and GitHub Pages deployment |
+
+`config.json` currently uses `simulation_root: ../Combined_CONUS` and `export_workers: 6`. Update the simulation path when relocating the working project. The preview launcher uses port 8766. When moving to another GitHub repository, update the repository references in the publishing scripts and the catalog URL in the watcher.
+
+## Troubleshooting
+
+- **Website shows an older hour:** check the watcher log, validation result, and Actions deployment. Browser refresh only shows already-published data.
+- **Old layout persists:** use the portal refresh button or Ctrl+Shift+R.
+- **Validation fails:** publication stops before upload. Read the variable/time/error in the message; do not disable validation. The large-value rounding issue was corrected in the exporter.
+- **HRRR input is delayed:** the simulation must finish the new hour before publication can start.
+- **Another watcher is running:** use the existing window instead of starting a duplicate.
+- **Source-only change is not published:** run a single manual update after stopping the idle watcher.
+
+## Contacts and acknowledgement
+
+**Contact:**
+
+Jia Yang — jia.yang11@okstate.edu  
+Xiaohao Jiao — xiaohao.jiao@okstate.edu  
+Department of Natural Resource Ecology and Management  
+Oklahoma State University
+
+**Acknowledgement:** This work is supported by NASA, USGS, and NSF.
+
+The portal is a beta research product. Potential fire behavior assumes a fire occurs; it does not predict ignition locations or fire perimeters. Warm-up results and display ranges should not be interpreted as official operational danger classifications.
