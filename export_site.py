@@ -18,11 +18,11 @@ def export_one(entry):
         with mem.open() as ds:
             a=ds.read(1,masked=True);valid=~np.ma.getmaskarray(a)&np.isfinite(a.data)
             data=np.where(valid,a.data,np.nan).astype('<f4');vals=data[valid];tags=ds.tags()
-            v=entry['variable'];base=entry['time']+'_'+entry['sha'][:16]+('_web5rain' if v=='RAIN_total_mm' else '_web4weather' if v in ('RELH_mean','RAIN_total_mm','SRAD_mean') else '_web3temp' if v=='TAIR_mean' else '_web2')
+            v=entry['variable'];base=entry['time']+'_'+entry['sha'][:16]+('_web6live' if v in ('lmc_herb','lmc_woody') else '_web5rain' if v=='RAIN_total_mm' else '_web4weather' if v in ('RELH_mean','RAIN_total_mm','SRAD_mean') else '_web3temp' if v=='TAIR_mean' else '_web2')
             rel=Path('data')/v/base
-            numeric=rel.with_suffix('.bin.gz');png=rel.with_suffix('.png')
+            numeric=rel.with_name(rel.name+'_precision2').with_suffix('.bin.gz');png=rel.with_suffix('.png')
             dest=ROOT/'site'
-            if not (dest/numeric).exists():atomic(dest/numeric,gzip.compress(np.where(valid,np.rint(np.nan_to_num(data)*100),-2147483648).astype('<i4').tobytes(),compresslevel=6,mtime=0))
+            if not (dest/numeric).exists():atomic(dest/numeric,gzip.compress(np.where(valid,np.rint(np.nan_to_num(data).astype(np.float64)*100),-2147483648).astype('<i4').tobytes(),compresslevel=6,mtime=0))
             if not (dest/png).exists():
                 colors=([[215,25,28],[253,141,60],[255,230,65],[44,180,91],[33,102,222]] if src.GROUPS[v]=='Fuel moisture' or v=='RELH_mean' else
                         [[255,255,225],[151,218,130],[48,202,211],[38,121,218],[19,35,130]] if v=='RAIN_total_mm' else

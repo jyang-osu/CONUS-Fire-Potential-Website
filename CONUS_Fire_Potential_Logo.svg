@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+<title id="title">CONUS Fire Potential</title><desc id="desc">A dark green shield with a golden sun, a wind line, a forest silhouette, and an orange flame rising over the landscape.</desc>
+<path d="M64 5 115 22v49c0 25-25 43-51 53C38 114 13 96 13 71V22Z" fill="#fff3da"/>
+<path d="M64 11 109 26v45c0 21-21 37-45 47-24-10-45-26-45-47V26Z" fill="#214c46"/>
+<circle cx="42" cy="36" r="10" fill="#ffcb76"/>
+<path d="M69 31h20c9 0 9 11 1 11H78" fill="none" stroke="#b5d7d5" stroke-width="3.5" stroke-linecap="round"/>
+<path d="m36 49-13 21h8l-11 16h32L41 70h8Z" fill="#91b5a0"/>
+<path d="M72 43c4 14-9 23-6 34 5-3 8-8 9-14 16 15 20 30 10 39-9 9-25 7-31-4-6-12 2-20 8-29 6-9 9-16 10-26Z" fill="#f57b38"/>
+<path d="M73 82c0 7-8 12-6 18 2 5 8 6 11 1 4-5-2-13-5-19Z" fill="#fff0c8"/>
+<path d="M28 92c9 0 15 4 22 8" fill="none" stroke="#fff0c8" stroke-width="3" stroke-linecap="round"/>
+</svg>

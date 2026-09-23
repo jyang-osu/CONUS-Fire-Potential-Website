@@ -17,7 +17,8 @@ for var in catalog['variables']:
     with rasterio.open(source[e['key']]['path']) as ds:
         a=ds.read(1,masked=True);mask=~np.ma.getmaskarray(a).ravel()&np.isfinite(a.data.ravel())
         assert np.array_equal(mask,valid)
-        assert np.max(np.abs(values[valid]/100-a.data.ravel()[valid]))<=.006
+        error=float(np.max(np.abs(values[valid]/100-a.data.ravel()[valid]), initial=0))
+        if error>.006: raise ValueError(f'{var} at {e["time"]}: numeric precision error {error:.9f} exceeds 0.006')
     with rasterio.open(ROOT/'site'/e['png']) as ds:
         assert (ds.width,ds.height)==(e['width'],e['height'])
     checks.append(dict(variable=var,hours=len(group)))
